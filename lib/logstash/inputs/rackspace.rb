@@ -71,14 +71,14 @@ class LogStash::Inputs::Rackspace < LogStash::Inputs::Base
 
   public
   def run(output_queue)
-    while !finished?
+    while !stop?
       claim = @rackspace_queue.claims.create :ttl => @ttl, :grace => 100, :limit => @claim
       if claim
         claim.messages.each do |message|
           queue_event message, output_queue
         end
       end # unless
-    end # while !finished
+    end # while !stop
   end # def run
 
   public
