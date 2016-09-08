@@ -21,22 +21,36 @@ class LogStash::Inputs::Rackspace < LogStash::Inputs::Base
 
   # number of messages to claim
   # Min: 1, Max: 10
-  config :claim,    :validate => :number, :default => 1
+  config :claim, :validate => :number, :default => 1
   
   # length of time to hold claim
   # Min: 60
-  config :ttl,    :validate => :number, :default => 60
+  config :ttl, :validate => :number, :default => 60
+  
+  # Rackspace Service URL. Defaults to Region Public is not specifed
+  config :queue_url, :validate => :string, :required => false
 
   public
   def register
     require "fog"
-    @service = Fog::Rackspace::Queues.new(
-      :rackspace_username  => @username,   # Your Rackspace Username
-      :rackspace_api_key   => @api_key,         # Your Rackspace API key
-      :rackspace_region    => @region.to_sym,                  # Your desired region
-      :connection_options  => {}                     # Optional connection options
+	
+	if @queue_url
+		@service = Fog::Rackspace::Queues.new(
+		:rackspace_username  => @username,   # Your Rackspace Username
+		:rackspace_api_key   => @api_key,         # Your Rackspace API key
+		:rackspace_region    => @region.to_sym,   # Your desired region
+		:rackspace_queues_url => @queue_url,      #Queue URL Override
+		:connection_options  => {}                #Optional connection options
     )
-
+	else
+		@service = Fog::Rackspace::Queues.new(
+		:rackspace_username  => @username,   # Your Rackspace Username
+		:rackspace_api_key   => @api_key,         # Your Rackspace API key
+		:rackspace_region    => @region.to_sym,                  # Your desired region
+		:connection_options  => {}                     # Optional connection options
+    )
+	end
+	
     begin
       @rackspace_queue = @service.queues.create :name => @queue
     rescue Fog::Rackspace::Queues::ServiceError => e
